@@ -1,17 +1,26 @@
-# Use official PHP 8.2 image with Apache
+# Use official PHP with Apache
 FROM php:8.2-apache
 
-# Install MySQL extensions
-RUN docker-php-ext-install mysqli pdo pdo_mysql
+# Install system deps, composer prerequisites, and PHP extensions
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    zip \
+ && docker-php-ext-install mysqli pdo pdo_mysql zip \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy all project files
-COPY . /var/www/html/
-
-# Enable Apache rewrite module (optional)
+# Enable apache rewrite
 RUN a2enmod rewrite
 
-# Expose port 10000 (Render default)
+# Copy project files
+COPY . /var/www/html/
+
+# Ensure permissions
+RUN chown -R www-data:www-data /var/www/html
+
+# Expose Render's default port
 EXPOSE 10000
 
-# Start PHP server
-CMD ["php", "-S", "0.0.0.0:10000", "-t", "/var/www/html"]
+# Use Apache foreground (recommended for php:apache image)
+CMD ["apache2-foreground"]
